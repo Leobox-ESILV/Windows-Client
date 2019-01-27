@@ -8,7 +8,7 @@
     mc:Ignorable="d"
     Background="Beige"
     Width="214" Height="435"
-    Title="login">
+    Title="login" Loaded="Page_Loaded">
 
     <Grid Margin="0,0,0,0">
         <StackPanel HorizontalAlignment="Center" Height="435" Margin="0,0,0,0" VerticalAlignment="Top" Width="214" Orientation="Vertical">
@@ -22,20 +22,20 @@
             <TextBlock Name="msgErreur" Margin="0,0,0,0" Text="" TextWrapping="Wrap" HorizontalAlignment="Center"/>
             <Button Click="Button_Click" Content="Login" HorizontalAlignment="Stretch" Margin="62,0" VerticalAlignment="Stretch" Height="25"/>
             <TextBlock Margin="0,20,0,30" HorizontalAlignment="Center">
-                <Hyperlink>
+                <Hyperlink Click="Hyperlink_Click_1">
                     <TextBlock Text="Password forgotten ?" />
                 </Hyperlink>
             </TextBlock>
 
-            <TextBlock Margin="0,10,0,10" HorizontalAlignment="Center">
+            <TextBlock Margin="0,0,0,10" HorizontalAlignment="Center">
                 <TextBlock Text="Not registered ?" />
-                <Hyperlink>
+                <Hyperlink Click="Hyperlink_Click">
                     <TextBlock Text="Create an account" />
                 </Hyperlink>
             </TextBlock>
 
 
         </StackPanel>
-
+        <Frame x:Name="_NavigationFrame" NavigationUIVisibility="Hidden" />
     </Grid>
 </Page>

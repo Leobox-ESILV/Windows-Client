@@ -10,27 +10,18 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 namespace LeoboxV2
 {
     /// <summary>
-    /// Logique d'interaction pour MainWindow.xaml
+    /// Logique d'interaction pour running.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class running : Window
     {
-        public MainWindow()
+        public running()
         {
             InitializeComponent();
-        }
-
-
-        private void Window_Loaded(object sender, RoutedEventArgs e)
-        {
-            //NavigationService navService = NavigationService.GetNavigationService(this);
-             _NavigationFrame.Navigate(new login());
-            //this.Content = new inscription();
         }
     }
 }

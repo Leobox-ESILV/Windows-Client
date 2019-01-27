@@ -1,0 +1,39 @@
+﻿<Page x:Class="LeoboxV2.inscription"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:LeoboxV2"
+      mc:Ignorable="d" 
+      Background="Beige"
+      Width="214" Height="435"
+      Title="inscription">
+
+    <Grid>
+        <StackPanel HorizontalAlignment="Center" Height="435" Margin="0,0,0,0" VerticalAlignment="Top" Width="214" Orientation="Vertical">
+            <Image Source="logo.png" Height="129" Margin="0,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+
+            <TextBlock Margin="0,10,0,0" Text="Registration :" TextWrapping="Wrap" FontSize="18" FontWeight="Bold" TextDecorations="Underline" HorizontalAlignment="Center"/>
+            <Label Margin="15,0,0,0" Content="Email :" Height="28" HorizontalAlignment="Left" Name="labelLogin" VerticalAlignment="Top" Width="50" />
+            <TextBox Name="txtLogin" Margin="15,0" Text=""/>
+            <Label Margin="15,0,0,0" Content="Username :" Height="28" HorizontalAlignment="Left" Name="labelUsername" VerticalAlignment="Top" Width="73" />
+            <TextBox Name="txtUsername" Margin="15,0" Text=""/>
+            <Label Content="Password :" Margin="15,0,0,0" Height="28" HorizontalAlignment="Left" Name="labelPwd" VerticalAlignment="Top" Width="64" />
+            <PasswordBox Margin="15,0" Name="txtPwd"/>
+            <Label Content="Re password :" Margin="15,0,0,0" Height="28" HorizontalAlignment="Left" Name="labelPwd2" VerticalAlignment="Top" Width="92" />
+            <PasswordBox Margin="15,0" Name="txtPwd2"/>
+            <TextBlock Name="msgErreur" Margin="0,0,0,0" Text="" TextWrapping="Wrap" HorizontalAlignment="Center"/>
+            <Button Click="Button_Click" Content="Create account" HorizontalAlignment="Stretch" Margin="62,0" VerticalAlignment="Stretch" Height="25"/>
+       
+            <TextBlock Margin="0,20,0,0" HorizontalAlignment="Center">
+                <TextBlock Text="Already registered ?" />
+                <Hyperlink Click="Hyperlink_Click">
+                    <TextBlock Text="Login in" />
+                </Hyperlink>
+            </TextBlock>
+
+
+        </StackPanel>
+        <Frame x:Name="_NavigationFrame" NavigationUIVisibility="Hidden" />
+    </Grid>
+</Page>
