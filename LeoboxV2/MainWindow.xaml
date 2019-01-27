@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:LeoboxV2"
         mc:Ignorable="d"
-        Title="MainWindow" Height="465" Width="230" Loaded="Window_Loaded" >
+        Title="MainWindow" Height="475" Width="230" Loaded="Window_Loaded" >
     <Grid>
         <Frame x:Name="_NavigationFrame" NavigationUIVisibility="Hidden" />
     </Grid>

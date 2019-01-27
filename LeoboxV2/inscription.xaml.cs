@@ -15,6 +15,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using RestSharp;
 
 namespace LeoboxV2
 {
@@ -33,64 +34,75 @@ namespace LeoboxV2
             _NavigationFrame.Navigate(new login());
         }
 
-
-        private const string URL = "http://leobox.org:8080/v1/user/create";
-
+        
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             string mail = txtLogin.Text;
             string pwd = txtPwd.Password.ToString();
             string rePwd = txtPwd2.Password.ToString();
-            string username = txtUsername.ToString();
+            string username = txtUsername.Text.ToString();
 
-            if(pwd != rePwd)
+            if(mail == "")
             {
+                msgErreur.Text = "";
+                msgErreur.Text = "Mail's field is empty.";
+            }
+            else if(username == "")
+            {
+                msgErreur.Text = "";
+                msgErreur.Text = "Username's field is empty.";
+            }
+            else if (pwd == "")
+            {
+                msgErreur.Text = "";
+                msgErreur.Text = "Password's field is empty.";
+            }
+            else if (rePwd == "")
+            {
+                msgErreur.Text = "";
+                msgErreur.Text = "Re password's field is empty";
+            }
+            else if (pwd != rePwd)
+            {
+                msgErreur.Text = "";
                 msgErreur.Text = "Passwords not matching.";
             }
             else
             {
-                string urlParameters = "?email=" + mail + "&username=" + username + "&password=" + pwd;
+                var client = new RestClient("http://leobox.org:8080/v1/user/create?email=" + mail + "&username=" + username + "&password=" + pwd);
+                var request = new RestRequest(Method.POST);
+                request.AddHeader("cache-control", "no-cache");
 
-                HttpClient client = new HttpClient();
-                client.BaseAddress = new Uri(URL);
+                IRestResponse response = client.Execute(request);
 
-                // Add an Accept header for JSON format.
-                client.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/json"));
+                var res = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content);
+                var comment = "";
+                var status = "";
 
-                // List data response.
-                HttpResponseMessage response = client.GetAsync(urlParameters).Result;
-
-                Console.WriteLine(response);
-
-                if (response.IsSuccessStatusCode)
+                foreach (KeyValuePair<string, string> kvp in res)
                 {
-                    client.Dispose();
-                    msgErreur.Text = "";
-                    msgErreur.Text = "You are now registered!";
-
-                }
-                else
-                {
-
-                    var result = response.Content.ReadAsStringAsync();
-                    var ok = JsonConvert.DeserializeObject<Dictionary<string, string>>(result.Result);
-                    var comment = "";
-
-                    foreach (KeyValuePair<string, string> kvp in ok)
+                    if (kvp.Key == "comment")
                     {
-                        if (kvp.Key == "comment")
-                        {
-                            comment = kvp.Value;
-                            break;
-                        }
+                        comment = kvp.Value;
                     }
+                    else if (kvp.Key == "is_status")
+                    {
+                        status = kvp.Value;
+                    }
+                }
+                
+                if(status == "false")
+                {
                     msgErreur.Text = "";
                     msgErreur.Text = comment;
                 }
+                else
+                {
+                    MessageBox.Show(comment + ", you can now login in.");
+                    _NavigationFrame.Navigate(new login());
+                }
 
             }
-
         }
     }
 }

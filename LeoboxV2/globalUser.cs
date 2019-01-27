@@ -12,7 +12,7 @@ namespace LeoboxV2
         private static string email;
         private static int expiration_token;
         private static string path_home;
-        private static int quota;
+        private static long quota;
         private static int used_space;
         private static string user_token;
 
@@ -24,7 +24,7 @@ namespace LeoboxV2
 
         public static string Path_home { get => path_home; set => path_home = value; }
 
-        public static int Quota { get => quota; set => quota = value; }
+        public static long Quota { get => quota; set => quota = value; }
 
         public static int Used_space { get => used_space; set => used_space = value; }
 

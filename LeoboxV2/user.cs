@@ -14,7 +14,7 @@ namespace LeoboxV2
         private string email;
         private int expiration_token;
         private string path_home;
-        private int quota;
+        private long quota;
         private int used_space;
         private string user_token;
 
@@ -31,7 +31,7 @@ namespace LeoboxV2
         public string Path_home { get => path_home; set => path_home = value; }
 
         [JsonProperty("quota")]
-        public int Quota { get => quota; set => quota = value; }
+        public long Quota { get => quota; set => quota = value; }
 
         [JsonProperty("used_space")]
         public int Used_space { get => used_space; set => used_space = value; }
@@ -39,9 +39,9 @@ namespace LeoboxV2
         [JsonProperty("user_token")]
         public string User_token { get => user_token; set => user_token = value; }
 
-        public user(string display_name, string email, int expiration_token, string path_home, int quota, int used_space, string user_token)
+        public user(string display_name, string email, int expiration_token, string path_home, long quota, int used_space, string user_token)
         {
-            name = display_name;
+            this.name = display_name;
             this.email = email;
             this.expiration_token = expiration_token;
             this.path_home = path_home;

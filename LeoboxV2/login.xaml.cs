@@ -22,7 +22,7 @@ using ShellBoost.Core.Utilities;
 using ShellBoost.Core.WindowsPropertySystem;
 using System.Windows.Forms;
 using System.Security.Permissions;
-
+using RestSharp;
 
 namespace LeoboxV2
 {
@@ -48,26 +48,32 @@ namespace LeoboxV2
             string login = txtLogin.Text;
             string pwd = txtPwd.Password.ToString();
 
-            urlParameters = "?username=" + login + "&password=" + pwd;
+            var client = new RestClient("http://leobox.org:8080/v1/user/login?username="+login+"&password="+pwd);
+            var request = new RestRequest(Method.GET);
+            request.AddHeader("cache-control", "no-cache");
+            IRestResponse response = client.Execute(request);
 
-            HttpClient client = new HttpClient();
-            client.BaseAddress = new Uri(URL);
-
-            // Add an Accept header for JSON format.
-            client.DefaultRequestHeaders.Accept.Add(
-            new MediaTypeWithQualityHeaderValue("application/json"));
-
-            // List data response.
-            HttpResponseMessage response = client.GetAsync(urlParameters).Result;  // Blocking call! Program will wait here until a response is received or a timeout occurs.
-            if (response.IsSuccessStatusCode)
+            var status = "";
+            var comment = "";
+            var res = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content);
+            foreach (KeyValuePair<string, string> kvp in res)
             {
+                if (kvp.Key == "is_status")
+                {
+                    status = kvp.Value;
+                }
+                if(kvp.Key == "comment")
+                {
+                    comment = kvp.Value;
+                }
+            }
 
-                client.Dispose();
+            if (status == "true")
+            {
                 msgErreur.Text = "";
-                msgErreur.Text = "OK good";
-
-                var result = response.Content.ReadAsStringAsync();
-                user currentUser = JsonConvert.DeserializeObject<user>(result.Result);
+                msgErreur.Text = comment;
+                
+                user currentUser = JsonConvert.DeserializeObject<user>(response.Content);
                 
                 //save current user info on global
                 globalUser.Name = currentUser.Name;
@@ -79,15 +85,12 @@ namespace LeoboxV2
                 globalUser.User_token = currentUser.User_token;
 
                 Console.WriteLine("Registered");
-                client.Dispose();
-
                 
             }
             else
             {
                 msgErreur.Text = "";
-                msgErreur.Text = "non";
-                client.Dispose();
+                msgErreur.Text = comment;
             }
 
         }
