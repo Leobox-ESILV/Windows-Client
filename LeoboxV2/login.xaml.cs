@@ -136,7 +136,7 @@ namespace LeoboxV2
 
         private void Hyperlink_Click_1(object sender, RoutedEventArgs e)
         {
-
+            _NavigationFrame.Navigate(new resetPwd());
         }
         
         public class MyShellFolderServer : ShellFolderServer // this base class is located in ShellBoost.Core
