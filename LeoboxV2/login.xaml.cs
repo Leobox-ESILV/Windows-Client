@@ -101,36 +101,9 @@ namespace LeoboxV2
 
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            //running ru = new running();
-            //ru.Show();
+           
         }
-
-        /*[PermissionSet(SecurityAction.Demand, Name = "FullTrust")]
-        public static void watch()
-        {
-            FileSystemWatcher watcher = new FileSystemWatcher();
-            watcher.Path = @"C:\Users\dilan\OneDrive\Bureau\root";
-            watcher.NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite
-           | NotifyFilters.FileName | NotifyFilters.DirectoryName;
-            watcher.Filter = "*.*";
-            watcher.Changed += new FileSystemEventHandler(OnChanged);
-            watcher.Renamed += new RenamedEventHandler(OnRenamed);
-            watcher.EnableRaisingEvents = true;
-
-            Console.WriteLine("Press \'q\' to quit the sample.");
-            while (Console.Read() != 'q') ;
-
-        }
-
-        private static void OnRenamed(object sender, RenamedEventArgs e)
-        {
-            Console.WriteLine("something changed...");
-        }
-
-        private static void OnChanged(object sender, FileSystemEventArgs e)
-        {
-            Console.WriteLine("something changed...");
-        }*/
+        
 
         private void Hyperlink_Click(object sender, RoutedEventArgs e)
         {

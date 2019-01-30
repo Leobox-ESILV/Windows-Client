@@ -52,10 +52,6 @@ namespace LeoboxV2
                     {
                         Thread.Sleep(10000);
                     }
-                    /*while (Console.ReadKey(true).Key != ConsoleKey.Escape)
-                    {
-
-                    }*/
                     
                 }
                 
@@ -63,7 +59,71 @@ namespace LeoboxV2
             }).Start();
 
 
+            new Thread(() =>
+            {
+
+                FileSystemWatcher watcher = new FileSystemWatcher();
+                watcher.IncludeSubdirectories = true;
+                watcher.Path = @"C:\Users\dilan\OneDrive\Bureau\root";
+                watcher.NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite
+               | NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.CreationTime | 
+               NotifyFilters.Size ;
+                watcher.Filter = "*.*";
+                watcher.Renamed += new RenamedEventHandler(OnRenamed);
+                watcher.Created += new FileSystemEventHandler(OnCreated);
+                watcher.Deleted += new FileSystemEventHandler(OnDeleted);
+
+                watcher.EnableRaisingEvents = true;
+                while (true)
+                    {
+                        Thread.Sleep(10000);
+                    }
+
+            }).Start();
+
+            new Thread(() =>
+            {
+
+                FileSystemWatcher changementWatcher = new FileSystemWatcher();
+                changementWatcher.IncludeSubdirectories = true;
+                changementWatcher.Path = @"C:\Users\dilan\OneDrive\Bureau\root";
+                changementWatcher.NotifyFilter = NotifyFilters.Size;
+                changementWatcher.Filter = "*.*";
+                changementWatcher.Changed += new FileSystemEventHandler(OnChanged);
+
+                changementWatcher.EnableRaisingEvents = true;
+                while (true)
+                {
+                    Thread.Sleep(10000);
+                }
+
+            }).Start();
+
+
         }
+
+        private static void OnDeleted(object sender, FileSystemEventArgs e)
+        {
+           Console.WriteLine("change type: " + e.ChangeType + " | fullPath: " + e.FullPath + " | name: " + e.Name);
+        }
+
+
+        private static void OnCreated(object sender, FileSystemEventArgs e)
+        {
+            Console.WriteLine("change type: "+e.ChangeType + " | fullPath: " + e.FullPath + " | name: " + e.Name);
+        }
+
+        private static void OnRenamed(object sender, RenamedEventArgs e)
+        {
+            Console.WriteLine("change type: "+e.ChangeType + " | fullPath: " + e.FullPath + " | name: " + e.Name + " | oldName: " + e.OldName + " | oldPath: " + e.OldFullPath);
+        }
+
+        private static void OnChanged(object sender, FileSystemEventArgs e)
+        {
+            Console.WriteLine("change type: " + e.ChangeType + " | fullPath: " + e.FullPath + " | name: " + e.Name);
+        }
+
+
 
         private void Window_Closed(object sender, EventArgs e)
         {
