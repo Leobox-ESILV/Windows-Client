@@ -18,8 +18,10 @@ using ShellBoost.Core;
 using ShellBoost.Core.WindowsShell;
 using System.Threading;
 using System.ComponentModel;
-
-
+using DSOFile;
+using RestSharp;
+using Newtonsoft.Json;
+using RestSharp.Extensions;
 
 namespace LeoboxV2
 {
@@ -33,32 +35,11 @@ namespace LeoboxV2
             InitializeComponent();
         }
 
-        
+        string tempFolderPath = System.IO.Path.GetTempPath();
+
+
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            new Thread(() =>
-            {
-
-                Console.WriteLine("here");
-                var info = new DirectoryInfo(System.IO.Path.GetFullPath("C:/Users/dilan/OneDrive/Bureau/root"));
-                Console.WriteLine(info);
-                using (var server = new MyShellFolderServer(info))
-                {
-                    var config = new ShellFolderConfiguration();   // this class is located in ShellBoost.Core
-                    ShellFolderServer.RegisterNativeDll(RegistrationMode.User);
-                    server.Start(config); // start the server
-                    Console.WriteLine("Started. Press ESC to stop.");
-                    while (true)
-                    {
-                        Thread.Sleep(10000);
-                    }
-                    
-                }
-                
-                
-            }).Start();
-
-
             new Thread(() =>
             {
 
@@ -99,15 +80,102 @@ namespace LeoboxV2
 
             }).Start();
 
+            var client = new RestClient("http://leobox.org:8080/v1/file/test?username="+globalUser.Name);
+            var request = new RestRequest(Method.GET);
+            request.AddHeader("cache-control", "no-cache");
+            request.AddHeader("ApiKeyUser", globalUser.User_token);
+            IRestResponse response = client.Execute(request);
+
+            node nodes = JsonConvert.DeserializeObject<node>(response.Content);
+            List<node> ln = new List<node>();
+            foreach (node n in nodes.sub_dir)
+            {
+                ln.Add(n);
+            }
+            DirectoryInfo di = Directory.CreateDirectory(tempFolderPath + @"\Leobox");
+            
+            iterateNode(ln);
+
+            new Thread(() =>
+            {
+
+                Console.WriteLine("here");
+                var info = new DirectoryInfo(System.IO.Path.GetFullPath(tempFolderPath + @"\Leobox"));
+                Console.WriteLine(info);
+                using (var server = new MyShellFolderServer(info))
+                {
+                    var config = new ShellFolderConfiguration();   // this class is located in ShellBoost.Core
+                    ShellFolderServer.RegisterNativeDll(RegistrationMode.User);
+                    server.Start(config); // start the server
+                    Console.WriteLine("Started. Press ESC to stop.");
+                    while (true)
+                    {
+                        Thread.Sleep(10000);
+                    }
+
+                }
+
+
+            }).Start();
+
 
         }
 
+
+
+
+
+
+        private void iterateNode(List<node> no)
+        {
+            foreach (node n in no)
+            {
+                if(n.type == "Folder")
+                {
+                    if(n.name == n.path_file)
+                    {
+                        DirectoryInfo di = Directory.CreateDirectory(tempFolderPath + @"\Leobox\" + n.name);
+                    }
+                    else
+                    {
+                        DirectoryInfo di = Directory.CreateDirectory(tempFolderPath + @"\Leobox\" + n.path_file);
+                    }
+                    iterateNode(n.sub_dir);
+                }
+                else
+                {
+                    if(n.name == n.path_file)
+                    {
+                        //dl to root
+                        var client = new RestClient("http://leobox.org:8080/v1/file/test/"+n.id);
+                        var request = new RestRequest(Method.GET);
+                        request.AddHeader("cache-control", "no-cache");
+                        request.AddHeader("accept", "multipart/form-data");
+                        request.AddHeader("ApiKeyUser", globalUser.User_token);
+                        client.DownloadData(request).SaveAs(tempFolderPath + @"\Leobox\" + n.name);
+
+                    }
+                    else
+                    {
+                        //dl to path
+                        var client = new RestClient("http://leobox.org:8080/v1/file/test/" + n.id);
+                        var request = new RestRequest(Method.GET);
+                        request.AddHeader("cache-control", "no-cache");
+                        request.AddHeader("accept", "multipart/form-data");
+                        request.AddHeader("ApiKeyUser", globalUser.User_token);
+                        client.DownloadData(request).SaveAs(tempFolderPath + @"\Leobox\" + n.path_file);
+                    }
+                }
+            }
+        }
+
+
+        //EVENTS on files
         private static void OnDeleted(object sender, FileSystemEventArgs e)
         {
            Console.WriteLine("change type: " + e.ChangeType + " | fullPath: " + e.FullPath + " | name: " + e.Name);
         }
-
-
+        
         private static void OnCreated(object sender, FileSystemEventArgs e)
         {
             Console.WriteLine("change type: "+e.ChangeType + " | fullPath: " + e.FullPath + " | name: " + e.Name);
@@ -122,20 +190,25 @@ namespace LeoboxV2
         {
             Console.WriteLine("change type: " + e.ChangeType + " | fullPath: " + e.FullPath + " | name: " + e.Name);
         }
-
-
-
+        
+        //EVENTS on app closing
         private void Window_Closed(object sender, EventArgs e)
         {
             ShellFolderServer.UnregisterNativeDll(RegistrationMode.User);
+            DirectoryInfo di = Directory.CreateDirectory(tempFolderPath + @"\Leobox");
+            di.Delete(true);
             Console.WriteLine("Stopped"); // end of program
         }
 
         private void Window_Unloaded(object sender, RoutedEventArgs e)
         {
             ShellFolderServer.UnregisterNativeDll(RegistrationMode.User);
+            DirectoryInfo di = Directory.CreateDirectory(tempFolderPath + @"\Leobox");
+            di.Delete(true);
             Console.WriteLine("Stopped"); // end of program
         }
+
+        //SHELL FOLDER
 
         public class MyShellFolderServer : ShellFolderServer // this base class is located in ShellBoost.Core
         {

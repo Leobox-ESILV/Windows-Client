@@ -68,7 +68,7 @@ namespace LeoboxV2
                 }
             }
 
-            if (status == "true")
+            if (status == "200")
             {
                 msgErreur.Text = "";
                 msgErreur.Text = comment;

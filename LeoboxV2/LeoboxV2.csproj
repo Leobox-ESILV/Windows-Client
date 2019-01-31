@@ -60,7 +60,8 @@
     <Optimize>true</Optimize>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>logo.ico</ApplicationIcon>
+    <ApplicationIcon>
+    </ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject />
@@ -123,6 +124,7 @@
     <Compile Include="inscription.xaml.cs">
       <DependentUpon>inscription.xaml</DependentUpon>
     </Compile>
+    <Compile Include="node.cs" />
     <Compile Include="resetPwd.xaml.cs">
       <DependentUpon>resetPwd.xaml</DependentUpon>
     </Compile>
@@ -196,6 +198,15 @@
     <Resource Include="logo.ico" />
   </ItemGroup>
   <ItemGroup>
+    <COMReference Include="DSOFile">
+      <Guid>{58968145-CF00-4341-995F-2EE093F6ABA3}</Guid>
+      <VersionMajor>2</VersionMajor>
+      <VersionMinor>1</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>False</Isolated>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </COMReference>
     <COMReference Include="SHDocVw">
       <Guid>{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}</Guid>
       <VersionMajor>1</VersionMajor>
@@ -207,6 +218,7 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="dsofile.dll" />
     <Content Include="ShellBoost.09e9ffb7da404bcbb48e229a1e1309e3.x64.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
