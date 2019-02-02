@@ -128,55 +128,7 @@ namespace LeoboxV2
 
         }
 
-
-
-
-
-
-        private void iterateNode(List<node> no)
-        {
-            foreach (node n in no)
-            {
-                if(n.type == "Folder")
-                {
-                    if(n.name == n.path_file)
-                    {
-                        DirectoryInfo di = Directory.CreateDirectory(tempFolderPath + @"Leobox\" + n.name);
-                    }
-                    else
-                    {
-                        DirectoryInfo di = Directory.CreateDirectory(tempFolderPath + @"Leobox\" + n.path_file);
-                    }
-                    iterateNode(n.sub_dir);
-                }
-                else
-                {
-                    if(n.name == n.path_file)
-                    {
-                        //dl to root
-                        var client = new RestClient("http://leobox.org:8080/v1/file/test/"+n.id);
-                        var request = new RestRequest(Method.GET);
-                        request.AddHeader("cache-control", "no-cache");
-                        request.AddHeader("accept", "multipart/form-data");
-                        request.AddHeader("ApiKeyUser", globalUser.User_token);
-                        client.DownloadData(request).SaveAs(tempFolderPath + @"Leobox\" + n.name);
-
-                    }
-                    else
-                    {
-                        //dl to path
-                        var client = new RestClient("http://leobox.org:8080/v1/file/test/" + n.id);
-                        var request = new RestRequest(Method.GET);
-                        request.AddHeader("cache-control", "no-cache");
-                        request.AddHeader("accept", "multipart/form-data");
-                        request.AddHeader("ApiKeyUser", globalUser.User_token);
-                        client.DownloadData(request).SaveAs(tempFolderPath + @"Leobox\" + n.path_file);
-                    }
-                }
-            }
-        }
-
-
+        
         //EVENTS on files
         private static void OnDeleted(object sender, FileSystemEventArgs e)
         {
@@ -210,6 +162,8 @@ namespace LeoboxV2
             var comment = "";
             int idInserted = 0;
             var res = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content);
+            node newNode = new node();
+            
             foreach (KeyValuePair<string, string> kvp in res)
             {
                 if (kvp.Key == "is_status")
@@ -220,9 +174,33 @@ namespace LeoboxV2
                 {
                     comment = kvp.Value;
                 }
-                if(kvp.Key == "id_insert")
+                if(kvp.Key == "id")
                 {
-                    idInserted = Convert.ToInt16(kvp.Value);
+                    newNode.id = Convert.ToInt16(kvp.Value);
+                }
+                if (kvp.Key == "mime_type")
+                {
+                    newNode.mime_type = kvp.Value;
+                }
+                if (kvp.Key == "name")
+                {
+                    newNode.name = kvp.Value;
+                }
+                if (kvp.Key == "path_file")
+                {
+                    newNode.path_file = kvp.Value;
+                }
+                if (kvp.Key == "size")
+                {
+                    newNode.size = Convert.ToInt16(kvp.Value);
+                }
+                if (kvp.Key == "storage_mtime")
+                {
+                    newNode.storage_mtime = Convert.ToInt64(kvp.Value);
+                }
+                if (kvp.Key == "type")
+                {
+                    newNode.type = kvp.Value;
                 }
             }
 
@@ -231,11 +209,15 @@ namespace LeoboxV2
             {
                 MessageBox.Show(comment);
             }
+            else
+            {
+                addToList(ln, newNode);
+            }
             
             
 
         }
-
+        
         private static void OnRenamed(object sender, RenamedEventArgs e)
         {
             Console.WriteLine("change type: "+e.ChangeType + " | fullPath: " + e.FullPath + " | name: " + e.Name + " | oldName: " + e.OldName + " | oldPath: " + e.OldFullPath);
@@ -271,6 +253,72 @@ namespace LeoboxV2
 
 
         //FUNCTIONS 
+
+
+        private static void addToList(List<node> no, node noAdded)
+        {
+            if (noAdded.name == noAdded.path_file)
+            {
+                no.Add(noAdded);
+                return;
+            }
+
+            foreach (node n in no)
+            {
+                if((n.type == "Folder") && (n.path_file == (noAdded.path_file).Replace("/"+noAdded.name, "")) )
+                {
+                    n.sub_dir.Add(noAdded);
+                    return;
+                }
+                else
+                {
+                    addToList(n.sub_dir, noAdded);
+                }
+            }
+        }
+
+        private void iterateNode(List<node> no)
+        {
+            foreach (node n in no)
+            {
+                if (n.type == "Folder")
+                {
+                    if (n.name == n.path_file)
+                    {
+                        DirectoryInfo di = Directory.CreateDirectory(tempFolderPath + @"Leobox\" + n.name);
+                    }
+                    else
+                    {
+                        DirectoryInfo di = Directory.CreateDirectory(tempFolderPath + @"Leobox\" + n.path_file);
+                    }
+                    iterateNode(n.sub_dir);
+                }
+                else
+                {
+                    if (n.name == n.path_file)
+                    {
+                        //dl to root
+                        var client = new RestClient("http://leobox.org:8080/v1/file/"+globalUser.Name+"/" + n.id);
+                        var request = new RestRequest(Method.GET);
+                        request.AddHeader("cache-control", "no-cache");
+                        request.AddHeader("accept", "multipart/form-data");
+                        request.AddHeader("ApiKeyUser", globalUser.User_token);
+                        client.DownloadData(request).SaveAs(tempFolderPath + @"Leobox\" + n.name);
+
+                    }
+                    else
+                    {
+                        //dl to path
+                        var client = new RestClient("http://leobox.org:8080/v1/file/"+ globalUser.Name + "/" + n.id);
+                        var request = new RestRequest(Method.GET);
+                        request.AddHeader("cache-control", "no-cache");
+                        request.AddHeader("accept", "multipart/form-data");
+                        request.AddHeader("ApiKeyUser", globalUser.User_token);
+                        client.DownloadData(request).SaveAs(tempFolderPath + @"Leobox\" + n.path_file);
+                    }
+                }
+            }
+        }
 
         private static string giveFilePath(string filePath, string fileName)
         {
