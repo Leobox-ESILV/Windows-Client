@@ -43,7 +43,7 @@ namespace LeoboxV2
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            var client = new RestClient("http://leobox.org:8080/v1/file/test?username=" + globalUser.Name);
+            var client = new RestClient("http://leobox.org:8080/v1/file/" + globalUser.Name);
             var request = new RestRequest(Method.GET);
             request.AddHeader("cache-control", "no-cache");
             request.AddHeader("ApiKeyUser", globalUser.User_token);
@@ -187,20 +187,53 @@ namespace LeoboxV2
         {
             Console.WriteLine("change type: "+e.ChangeType + " | fullPath: " + e.FullPath + " | name: " + e.Name);
 
-            var client = new RestClient("http://leobox.org:8080/v1/file/test/upload?path_file=/");
+            string currentFileName = giveFileName(e.FullPath, e.Name);
+            Console.WriteLine("current file name : " + currentFileName);
+            string path2upload = giveFilePath(e.FullPath, e.Name);
+            path2upload = path2upload.Replace(@"\", "/");
+            Console.WriteLine("folder path to add to request : " + path2upload);
+            Console.WriteLine("e.name : " + e.Name);
+            Console.WriteLine("e.fullpath : " + e.FullPath);
+
+
+            var client = new RestClient("http://leobox.org:8080/v1/file/"+globalUser.Name+"/upload?path_file="+path2upload);
             var request = new RestRequest(Method.POST);
             request.AddHeader("Content-Type", "multipart/form-data");
             request.AddHeader("ApiKeyUser", globalUser.User_token);
             request.AddHeader("accept", "application/json");
             request.AddHeader("content-type", "multipart/form-data");
             request.AddParameter("Content-Disposition: form-data", "name=\"file\"", ParameterType.RequestBody);
-            request.AddFile("file", @"C:\Users\dilan\OneDrive\Images\Pellicule\ten.jpg");
+            request.AddFile("file", e.FullPath);
             IRestResponse response = client.Execute(request);
 
-            //request.AddFile("te.jpg", @"C:\Users\dilan\OneDrive\Images\Pellicule\te.jpg");
-            //IRestResponse response = client.Execute(request);
+            var status = "";
+            var comment = "";
+            int idInserted = 0;
+            var res = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content);
+            foreach (KeyValuePair<string, string> kvp in res)
+            {
+                if (kvp.Key == "is_status")
+                {
+                    status = kvp.Value;
+                }
+                if (kvp.Key == "comment")
+                {
+                    comment = kvp.Value;
+                }
+                if(kvp.Key == "id_insert")
+                {
+                    idInserted = Convert.ToInt16(kvp.Value);
+                }
+            }
 
-            Console.WriteLine(response.Content);
+            
+            if(status != "200")
+            {
+                MessageBox.Show(comment);
+            }
+            
+            
+
         }
 
         private static void OnRenamed(object sender, RenamedEventArgs e)
@@ -211,7 +244,8 @@ namespace LeoboxV2
         static DateTime _lastTimeFileWatcherEventRaised;
         private static void OnChanged(object sender, FileSystemEventArgs e)
         {
-            if (sender == _dirWatcher)
+            /*
+            if (sender != _dirWatcher)
             {
                 if (e.ChangeType == WatcherChangeTypes.Changed)
                 {
@@ -222,20 +256,14 @@ namespace LeoboxV2
 
                     _lastTimeFileWatcherEventRaised = DateTime.Now;
                     Console.WriteLine("change type: " + e.ChangeType + " | fullPath: " + e.FullPath + " | name: " + e.Name);
-                    int lengthTmpPath = tempFolderPath.Length + 6;
-                    string fp = (e.FullPath).Substring(lengthTmpPath, (e.FullPath).Length - lengthTmpPath);
-                    int pos = (e.Name).LastIndexOf(@"\") + 1;
-                    string currentFileName = (e.Name).Substring(pos, (e.Name).Length - pos);
-
-                    int lengthCurrentFile = (currentFileName).Length;
-                    fp = fp.Remove(fp.Length - lengthCurrentFile);
-                    Console.WriteLine("path to upload : " + fp);
-
-
-
+                    string currentFileName = giveFileName(e.FullPath, e.Name);
+                    Console.WriteLine("current file name : " + currentFileName);
+                    string path2upload = giveFilePath(e.FullPath, e.Name);
+                    Console.WriteLine("path to upload : " + path2upload);
+                    
                 }
             }
-
+            */
 
            
 
@@ -244,50 +272,26 @@ namespace LeoboxV2
 
         //FUNCTIONS 
 
-        private string giveFileName(List<node> no)
+        private static string giveFilePath(string filePath, string fileName)
         {
+            int lengthTmpPath = tempFolderPath.Length + 6;
+            string fp = (filePath).Substring(lengthTmpPath, (filePath).Length - lengthTmpPath);
+            int pos = (fileName).LastIndexOf(@"\") + 1;
+            string currentFileName = (fileName).Substring(pos, (fileName).Length - pos);
 
-            foreach (node n in no)
-            {
-                if (n.type == "Folder")
-                {
-                    if (n.name == n.path_file)
-                    {
-                        DirectoryInfo di = Directory.CreateDirectory(tempFolderPath + @"Leobox\" + n.name);
-                    }
-                    else
-                    {
-                        DirectoryInfo di = Directory.CreateDirectory(tempFolderPath + @"Leobox\" + n.path_file);
-                    }
-                    iterateNode(n.sub_dir);
-                }
-                else
-                {
-                    if (n.name == n.path_file)
-                    {
-                        //dl to root
-                        var client = new RestClient("http://leobox.org:8080/v1/file/test/" + n.id);
-                        var request = new RestRequest(Method.GET);
-                        request.AddHeader("cache-control", "no-cache");
-                        request.AddHeader("accept", "multipart/form-data");
-                        request.AddHeader("ApiKeyUser", globalUser.User_token);
-                        client.DownloadData(request).SaveAs(tempFolderPath + @"Leobox\" + n.name);
+            int lengthCurrentFile = (currentFileName).Length;
+            fp = fp.Remove(fp.Length - lengthCurrentFile);
+            return fp;
+        }
 
-                    }
-                    else
-                    {
-                        //dl to path
-                        var client = new RestClient("http://leobox.org:8080/v1/file/test/" + n.id);
-                        var request = new RestRequest(Method.GET);
-                        request.AddHeader("cache-control", "no-cache");
-                        request.AddHeader("accept", "multipart/form-data");
-                        request.AddHeader("ApiKeyUser", globalUser.User_token);
-                        client.DownloadData(request).SaveAs(tempFolderPath + @"Leobox\" + n.path_file);
-                    }
-                }
-            }
 
-            return "";
+        private static string giveFileName(string filePath, string fileName)
+        {
+            int lengthTmpPath = tempFolderPath.Length + 6;
+            string fp = (filePath).Substring(lengthTmpPath, (filePath).Length - lengthTmpPath);
+            int pos = (fileName).LastIndexOf(@"\") + 1;
+            string currentFileName = (fileName).Substring(pos, (fileName).Length - pos);
+            return currentFileName;
         }
 
 
