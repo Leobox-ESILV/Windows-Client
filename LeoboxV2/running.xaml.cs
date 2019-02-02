@@ -18,7 +18,6 @@ using ShellBoost.Core;
 using ShellBoost.Core.WindowsShell;
 using System.Threading;
 using System.ComponentModel;
-using DSOFile;
 using RestSharp;
 using Newtonsoft.Json;
 using RestSharp.Extensions;
@@ -56,17 +55,44 @@ namespace LeoboxV2
             }
             DirectoryInfo di = Directory.CreateDirectory(tempFolderPath + @"Leobox");
 
-            iterateNode(ln);
+            new Thread(() =>
+            {
+
+                Console.WriteLine("here");
+                var info = new DirectoryInfo(System.IO.Path.GetFullPath(tempFolderPath + @"Leobox"));
+                Console.WriteLine(info);
+                using (var server = new MyShellFolderServer(info))
+                {
+                    var config = new ShellFolderConfiguration();   // this class is located in ShellBoost.Core
+                    ShellFolderServer.RegisterNativeDll(RegistrationMode.User);
+                    server.Start(config); // start the server
+                    Console.WriteLine("Started. Press ESC to stop.");
+                    while (true)
+                    {
+                        Thread.Sleep(10000);
+                    }
+
+                }
 
 
-            Thread.Sleep(10000);
+            }).Start();
+
+            iterateNode(ln).ContinueWith(task => startThreads());
+            
+        }
+        
+
+        //Starting THREADS 
+        private static void startThreads()
+        {
+            //Thread.Sleep(1000);
             new Thread(() =>
             {
                 watcher.IncludeSubdirectories = true;
                 watcher.Path = tempFolderPath + @"Leobox";
-                watcher.NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.FileName 
-                | NotifyFilters.DirectoryName | NotifyFilters.CreationTime | 
-               NotifyFilters.Size ;
+                watcher.NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.FileName
+                | NotifyFilters.DirectoryName | NotifyFilters.CreationTime |
+               NotifyFilters.Size;
                 watcher.Filter = "*.*";
                 watcher.Renamed += new RenamedEventHandler(OnRenamed);
                 watcher.Created += new FileSystemEventHandler(OnCreated);
@@ -74,9 +100,9 @@ namespace LeoboxV2
 
                 watcher.EnableRaisingEvents = true;
                 while (true)
-                    {
-                        Thread.Sleep(10000);
-                    }
+                {
+                    Thread.Sleep(10000);
+                }
 
             }).Start();
 
@@ -103,32 +129,9 @@ namespace LeoboxV2
 
             }).Start();
             
-            new Thread(() =>
-            {
-
-                Console.WriteLine("here");
-                var info = new DirectoryInfo(System.IO.Path.GetFullPath(tempFolderPath + @"Leobox"));
-                Console.WriteLine(info);
-                using (var server = new MyShellFolderServer(info))
-                {
-                    var config = new ShellFolderConfiguration();   // this class is located in ShellBoost.Core
-                    ShellFolderServer.RegisterNativeDll(RegistrationMode.User);
-                    server.Start(config); // start the server
-                    Console.WriteLine("Started. Press ESC to stop.");
-                    while (true)
-                    {
-                        Thread.Sleep(10000);
-                    }
-
-                }
-
-
-            }).Start();
-
-
         }
-
         
+
         //EVENTS on files
         private static void OnDeleted(object sender, FileSystemEventArgs e)
         {
@@ -160,7 +163,6 @@ namespace LeoboxV2
 
             var status = "";
             var comment = "";
-            int idInserted = 0;
             var res = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content);
             node newNode = new node();
             
@@ -223,7 +225,7 @@ namespace LeoboxV2
             Console.WriteLine("change type: "+e.ChangeType + " | fullPath: " + e.FullPath + " | name: " + e.Name + " | oldName: " + e.OldName + " | oldPath: " + e.OldFullPath);
         }
         
-        static DateTime _lastTimeFileWatcherEventRaised;
+        //static DateTime _lastTimeFileWatcherEventRaised;
         private static void OnChanged(object sender, FileSystemEventArgs e)
         {
             /*
@@ -276,8 +278,8 @@ namespace LeoboxV2
                 }
             }
         }
-
-        private void iterateNode(List<node> no)
+        
+        private static async Task iterateNode(List<node> no)
         {
             foreach (node n in no)
             {
@@ -291,7 +293,7 @@ namespace LeoboxV2
                     {
                         DirectoryInfo di = Directory.CreateDirectory(tempFolderPath + @"Leobox\" + n.path_file);
                     }
-                    iterateNode(n.sub_dir);
+                    await iterateNode(n.sub_dir);
                 }
                 else
                 {
@@ -303,7 +305,7 @@ namespace LeoboxV2
                         request.AddHeader("cache-control", "no-cache");
                         request.AddHeader("accept", "multipart/form-data");
                         request.AddHeader("ApiKeyUser", globalUser.User_token);
-                        client.DownloadData(request).SaveAs(tempFolderPath + @"Leobox\" + n.name);
+                        await Task.Factory.StartNew(() => client.DownloadData(request).SaveAs(tempFolderPath + @"Leobox\" + n.name));
 
                     }
                     else
@@ -314,7 +316,8 @@ namespace LeoboxV2
                         request.AddHeader("cache-control", "no-cache");
                         request.AddHeader("accept", "multipart/form-data");
                         request.AddHeader("ApiKeyUser", globalUser.User_token);
-                        client.DownloadData(request).SaveAs(tempFolderPath + @"Leobox\" + n.path_file);
+                        await Task.Factory.StartNew(() => client.DownloadData(request).SaveAs(tempFolderPath + @"Leobox\" + n.path_file));
+                        
                     }
                 }
             }

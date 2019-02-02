@@ -39,7 +39,6 @@ namespace LeoboxV2
         }
 
         private const string URL = "http://leobox.org:8080/v1/user/login";
-        private string urlParameters = "";
 
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -88,7 +87,7 @@ namespace LeoboxV2
                 running ru = new running();
                 ru.Show();
                 
-                //App.Current.Windows[0].Close();
+                App.Current.Windows[0].Close();
             }
             else
             {
