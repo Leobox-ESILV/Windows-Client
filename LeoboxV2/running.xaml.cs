@@ -140,84 +140,334 @@ namespace LeoboxV2
         
         private static void OnCreated(object sender, FileSystemEventArgs e)
         {
+            Thread.Sleep(1000);
             Console.WriteLine("change type: "+e.ChangeType + " | fullPath: " + e.FullPath + " | name: " + e.Name);
 
-            string currentFileName = giveFileName(e.FullPath, e.Name);
-            Console.WriteLine("current file name : " + currentFileName);
-            string path2upload = giveFilePath(e.FullPath, e.Name);
-            path2upload = path2upload.Replace(@"\", "/");
-            Console.WriteLine("folder path to add to request : " + path2upload);
-            Console.WriteLine("e.name : " + e.Name);
-            Console.WriteLine("e.fullpath : " + e.FullPath);
-
-
-            var client = new RestClient("http://leobox.org:8080/v1/file/"+globalUser.Name+"/upload?path_file="+path2upload);
-            var request = new RestRequest(Method.POST);
-            request.AddHeader("Content-Type", "multipart/form-data");
-            request.AddHeader("ApiKeyUser", globalUser.User_token);
-            request.AddHeader("accept", "application/json");
-            request.AddHeader("content-type", "multipart/form-data");
-            request.AddParameter("Content-Disposition: form-data", "name=\"file\"", ParameterType.RequestBody);
-            request.AddFile("file", e.FullPath);
-            IRestResponse response = client.Execute(request);
-
-            var status = "";
-            var comment = "";
-            var res = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content);
-            node newNode = new node();
-            
-            foreach (KeyValuePair<string, string> kvp in res)
+            FileAttributes attr = File.GetAttributes(e.FullPath);
+            if(attr.HasFlag(FileAttributes.Directory))
             {
-                if (kvp.Key == "is_status")
-                {
-                    status = kvp.Value;
-                }
-                if (kvp.Key == "comment")
-                {
-                    comment = kvp.Value;
-                }
-                if(kvp.Key == "id")
-                {
-                    newNode.id = Convert.ToInt16(kvp.Value);
-                }
-                if (kvp.Key == "mime_type")
-                {
-                    newNode.mime_type = kvp.Value;
-                }
-                if (kvp.Key == "name")
-                {
-                    newNode.name = kvp.Value;
-                }
-                if (kvp.Key == "path_file")
-                {
-                    newNode.path_file = kvp.Value;
-                }
-                if (kvp.Key == "size")
-                {
-                    newNode.size = Convert.ToInt16(kvp.Value);
-                }
-                if (kvp.Key == "storage_mtime")
-                {
-                    newNode.storage_mtime = Convert.ToInt64(kvp.Value);
-                }
-                if (kvp.Key == "type")
-                {
-                    newNode.type = kvp.Value;
-                }
-            }
+                //created file is directory
+                Console.WriteLine("DIRECTORY");
 
-            
-            if(status != "200")
-            {
-                MessageBox.Show(comment);
+                DirectoryInfo di = new DirectoryInfo(e.FullPath);
+                string[] entries = Directory.GetFileSystemEntries(e.FullPath, "*", SearchOption.AllDirectories);
+                FileAttributes fa;
+
+                if (entries.Length == 0)
+                {
+                    //without files
+                }
+                else
+                {
+                    string currentFileName = giveFileName(e.FullPath, e.Name);
+                    string path2upload = giveFilePath(e.FullPath, e.Name);
+                    path2upload = path2upload.Replace(@"\", "/");
+                    var client = new RestClient("http://leobox.org:8080/v1/file/" + globalUser.Name + "/createdir?path_dir=" + path2upload+currentFileName);
+                    var request = new RestRequest(Method.POST);
+                    request.AddHeader("cache-control", "no-cache");
+                    request.AddHeader("ApiKeyUser", globalUser.User_token);
+                    request.AddHeader("accept", "application/json");
+                    request.AddHeader("content-type", "multipart/form-data");
+                    IRestResponse response = client.Execute(request);
+
+                    var status = "";
+                    var comment = "";
+                    var res = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content);
+                    node newNode = new node();
+
+                    foreach (KeyValuePair<string, string> kvp in res)
+                    {
+                        if (kvp.Key == "is_status")
+                        {
+                            status = kvp.Value;
+                        }
+                        if (kvp.Key == "comment")
+                        {
+                            comment = kvp.Value;
+                        }
+                        if (kvp.Key == "id")
+                        {
+                            newNode.id = Convert.ToInt16(kvp.Value);
+                        }
+                        if (kvp.Key == "mime_type")
+                        {
+                            newNode.mime_type = kvp.Value;
+                        }
+                        if (kvp.Key == "name")
+                        {
+                            newNode.name = kvp.Value;
+                        }
+                        if (kvp.Key == "path_file")
+                        {
+                            newNode.path_file = kvp.Value;
+                        }
+                        if (kvp.Key == "size")
+                        {
+                            newNode.size = Convert.ToInt16(kvp.Value);
+                        }
+                        if (kvp.Key == "storage_mtime")
+                        {
+                            newNode.storage_mtime = Convert.ToInt64(kvp.Value);
+                        }
+                        if (kvp.Key == "type")
+                        {
+                            newNode.type = kvp.Value;
+                        }
+                    }
+
+
+                    if (status != "200")
+                    {
+                        MessageBox.Show(comment);
+                    }
+                    else
+                    {
+                        addToList(ln, newNode);
+                    }
+
+
+
+                    foreach (string en in entries)
+                    {
+                        string en2 = en.Replace("\\", "/");
+                        fa = File.GetAttributes(en2);
+                        if(fa.HasFlag(FileAttributes.Directory))
+                        {
+                            int index = en2.LastIndexOf("/");
+                            string nom = (en2.Substring(en2.LastIndexOf("/"))).Replace("/", "");
+                            currentFileName = giveFileName(en2, nom);
+                            Console.WriteLine("current file name : " + currentFileName);
+                            path2upload = giveFilePath(en2, nom);
+                            path2upload = path2upload.Replace(@"\", "/");
+                            Console.WriteLine("folder path to add to request : " + path2upload);
+                            Console.WriteLine("e.name : " + nom);
+                            Console.WriteLine("e.fullpath : " + en2);
+                            
+                            client = new RestClient("http://leobox.org:8080/v1/file/" + globalUser.Name + "/createdir?path_dir=" + path2upload+ currentFileName);
+                            request = new RestRequest(Method.POST);
+                            request.AddHeader("cache-control", "no-cache");
+                            request.AddHeader("ApiKeyUser", globalUser.User_token);
+                            request.AddHeader("accept", "application/json");
+                            request.AddHeader("content-type", "multipart/form-data");
+                            response = client.Execute(request);
+
+                            status = "";
+                            comment = "";
+                            res = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content);
+                            newNode = new node();
+
+                            foreach (KeyValuePair<string, string> kvp in res)
+                            {
+                                if (kvp.Key == "is_status")
+                                {
+                                    status = kvp.Value;
+                                }
+                                if (kvp.Key == "comment")
+                                {
+                                    comment = kvp.Value;
+                                }
+                                if (kvp.Key == "id")
+                                {
+                                    newNode.id = Convert.ToInt16(kvp.Value);
+                                }
+                                if (kvp.Key == "mime_type")
+                                {
+                                    newNode.mime_type = kvp.Value;
+                                }
+                                if (kvp.Key == "name")
+                                {
+                                    newNode.name = kvp.Value;
+                                }
+                                if (kvp.Key == "path_file")
+                                {
+                                    newNode.path_file = kvp.Value;
+                                }
+                                if (kvp.Key == "size")
+                                {
+                                    newNode.size = Convert.ToInt16(kvp.Value);
+                                }
+                                if (kvp.Key == "storage_mtime")
+                                {
+                                    newNode.storage_mtime = Convert.ToInt64(kvp.Value);
+                                }
+                                if (kvp.Key == "type")
+                                {
+                                    newNode.type = kvp.Value;
+                                }
+                            }
+
+
+                            if (status != "200")
+                            {
+                                MessageBox.Show(comment);
+                            }
+                            else
+                            {
+                                addToList(ln, newNode);
+                            }
+                        }
+                        else
+                        {
+                            en2 = en.Replace("\\", "/");
+                            string nom = (en2.Substring(en2.LastIndexOf("/"))).Replace("/","");
+                            currentFileName = giveFileName(en2, nom);
+                            Console.WriteLine("current file name : " + currentFileName);
+                            path2upload = giveFilePath(en2, nom);
+                            path2upload = path2upload.Replace(@"\", "/");
+                            Console.WriteLine("folder path to add to request : " + path2upload);
+                            Console.WriteLine("e.name : " + nom);
+                            Console.WriteLine("e.fullpath : " + en2);
+
+
+                            client = new RestClient("http://leobox.org:8080/v1/file/" + globalUser.Name + "/upload?path_file=" + path2upload);
+                            request = new RestRequest(Method.POST);
+                            request.AddHeader("Content-Type", "multipart/form-data");
+                            request.AddHeader("ApiKeyUser", globalUser.User_token);
+                            request.AddHeader("accept", "application/json");
+                            request.AddParameter("Content-Disposition: form-data", "name=\"file\"", ParameterType.RequestBody);
+                            request.AddFile("file", en2);
+                            response = client.Execute(request);
+
+                            status = "";
+                            comment = "";
+                            res = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content);
+                            newNode = new node();
+
+                            foreach (KeyValuePair<string, string> kvp in res)
+                            {
+                                if (kvp.Key == "is_status")
+                                {
+                                    status = kvp.Value;
+                                }
+                                if (kvp.Key == "comment")
+                                {
+                                    comment = kvp.Value;
+                                }
+                                if (kvp.Key == "id")
+                                {
+                                    newNode.id = Convert.ToInt16(kvp.Value);
+                                }
+                                if (kvp.Key == "mime_type")
+                                {
+                                    newNode.mime_type = kvp.Value;
+                                }
+                                if (kvp.Key == "name")
+                                {
+                                    newNode.name = kvp.Value;
+                                }
+                                if (kvp.Key == "path_file")
+                                {
+                                    newNode.path_file = kvp.Value;
+                                }
+                                if (kvp.Key == "size")
+                                {
+                                    newNode.size = Convert.ToInt16(kvp.Value);
+                                }
+                                if (kvp.Key == "storage_mtime")
+                                {
+                                    newNode.storage_mtime = Convert.ToInt64(kvp.Value);
+                                }
+                                if (kvp.Key == "type")
+                                {
+                                    newNode.type = kvp.Value;
+                                }
+                            }
+
+
+                            if (status != "200")
+                            {
+                                MessageBox.Show(comment);
+                            }
+                            else
+                            {
+                                addToList(ln, newNode);
+                            }
+                        }
+
+                    }
+                }
+
             }
             else
             {
-                addToList(ln, newNode);
-            }
-            
-            
+                Console.WriteLine("FILE !!!");
+                string currentFileName = giveFileName(e.FullPath, e.Name);
+                Console.WriteLine("current file name : " + currentFileName);
+                string path2upload = giveFilePath(e.FullPath, e.Name);
+                path2upload = path2upload.Replace(@"\", "/");
+                Console.WriteLine("folder path to add to request : " + path2upload);
+                Console.WriteLine("e.name : " + e.Name);
+                Console.WriteLine("e.fullpath : " + e.FullPath);
 
+
+                var client = new RestClient("http://leobox.org:8080/v1/file/" + globalUser.Name + "/upload?path_file=" + path2upload);
+                var request = new RestRequest(Method.POST);
+                request.AddHeader("Content-Type", "multipart/form-data");
+                request.AddHeader("ApiKeyUser", globalUser.User_token);
+                request.AddHeader("accept", "application/json");
+                request.AddHeader("content-type", "multipart/form-data");
+                request.AddParameter("Content-Disposition: form-data", "name=\"file\"", ParameterType.RequestBody);
+                request.AddFile("file", e.FullPath);
+                IRestResponse response = client.Execute(request);
+
+                var status = "";
+                var comment = "";
+                var res = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content);
+                node newNode = new node();
+
+                foreach (KeyValuePair<string, string> kvp in res)
+                {
+                    if (kvp.Key == "is_status")
+                    {
+                        status = kvp.Value;
+                    }
+                    if (kvp.Key == "comment")
+                    {
+                        comment = kvp.Value;
+                    }
+                    if (kvp.Key == "id")
+                    {
+                        newNode.id = Convert.ToInt16(kvp.Value);
+                    }
+                    if (kvp.Key == "mime_type")
+                    {
+                        newNode.mime_type = kvp.Value;
+                    }
+                    if (kvp.Key == "name")
+                    {
+                        newNode.name = kvp.Value;
+                    }
+                    if (kvp.Key == "path_file")
+                    {
+                        newNode.path_file = kvp.Value;
+                    }
+                    if (kvp.Key == "size")
+                    {
+                        newNode.size = Convert.ToInt16(kvp.Value);
+                    }
+                    if (kvp.Key == "storage_mtime")
+                    {
+                        newNode.storage_mtime = Convert.ToInt64(kvp.Value);
+                    }
+                    if (kvp.Key == "type")
+                    {
+                        newNode.type = kvp.Value;
+                    }
+                }
+
+
+                if (status != "200")
+                {
+                    MessageBox.Show(comment);
+                }
+                else
+                {
+                    addToList(ln, newNode);
+                }
+
+            }
+
+            
         }
         
         private static void OnRenamed(object sender, RenamedEventArgs e)
@@ -225,37 +475,42 @@ namespace LeoboxV2
             Console.WriteLine("change type: "+e.ChangeType + " | fullPath: " + e.FullPath + " | name: " + e.Name + " | oldName: " + e.OldName + " | oldPath: " + e.OldFullPath);
         }
         
-        //static DateTime _lastTimeFileWatcherEventRaised;
+        static DateTime _lastTimeFileWatcherEventRaised;
         private static void OnChanged(object sender, FileSystemEventArgs e)
         {
-            /*
-            if (sender != _dirWatcher)
+            FileAttributes attr = File.GetAttributes(e.FullPath);
+            if (attr.HasFlag(FileAttributes.Directory))
             {
-                if (e.ChangeType == WatcherChangeTypes.Changed)
-                {
-                    if (DateTime.Now.Subtract(_lastTimeFileWatcherEventRaised).TotalMilliseconds < 500)
-                    {
-                        return;
-                    }
 
-                    _lastTimeFileWatcherEventRaised = DateTime.Now;
-                    Console.WriteLine("change type: " + e.ChangeType + " | fullPath: " + e.FullPath + " | name: " + e.Name);
-                    string currentFileName = giveFileName(e.FullPath, e.Name);
-                    Console.WriteLine("current file name : " + currentFileName);
-                    string path2upload = giveFilePath(e.FullPath, e.Name);
-                    Console.WriteLine("path to upload : " + path2upload);
-                    
+            }
+            else
+            {
+                if (sender != _dirWatcher)
+                {
+                    if (e.ChangeType == WatcherChangeTypes.Changed)
+                    {
+                        if (DateTime.Now.Subtract(_lastTimeFileWatcherEventRaised).TotalMilliseconds < 500)
+                        {
+                            return;
+                        }
+
+                        _lastTimeFileWatcherEventRaised = DateTime.Now;
+                        Console.WriteLine("change type: " + e.ChangeType + " | fullPath: " + e.FullPath + " | name: " + e.Name);
+                        string currentFileName = giveFileName(e.FullPath, e.Name);
+                        Console.WriteLine("current file name : " + currentFileName);
+                        string path2upload = giveFilePath(e.FullPath, e.Name);
+                        Console.WriteLine("path to upload : " + path2upload);
+
+                    }
                 }
             }
-            */
-
-           
-
+            
         }
 
 
         //FUNCTIONS 
 
+       
 
         private static void addToList(List<node> no, node noAdded)
         {
