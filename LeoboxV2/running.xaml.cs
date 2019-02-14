@@ -152,7 +152,7 @@ namespace LeoboxV2
                 var client = new RestClient("http://leobox.org:8080/v1/file/"+globalUser.Name+"/"+ idToDelete.ToString());
                 var request = new RestRequest(Method.DELETE);
                 request.AddHeader("cache-control", "no-cache");
-                request.AddHeader("ApiKeyUser", "dV_hDbyN3pNAv4kv2FzO39yX7zJcDvjBpVLWw8cYddPG583e7m_K8pH0OETi1m0A88M");
+                request.AddHeader("ApiKeyUser", globalUser.User_token);
                 request.AddHeader("Accept", "application/json");
                 IRestResponse response = client.Execute(request);
 
@@ -210,7 +210,71 @@ namespace LeoboxV2
 
                     if (entries.Length == 0)
                     {
-                        //without files
+                        string currentFileName = giveFileName(e.FullPath, e.Name);
+                        string path2upload = giveFilePath(e.FullPath, e.Name);
+                        path2upload = path2upload.Replace(@"\", "/");
+                        var client = new RestClient("http://leobox.org:8080/v1/file/" + globalUser.Name + "/createdir?path_dir=" + path2upload + currentFileName);
+                        var request = new RestRequest(Method.POST);
+                        request.AddHeader("cache-control", "no-cache");
+                        request.AddHeader("ApiKeyUser", globalUser.User_token);
+                        request.AddHeader("accept", "application/json");
+                        request.AddHeader("content-type", "multipart/form-data");
+                        IRestResponse response = client.Execute(request);
+
+                        var status = "";
+                        var comment = "";
+                        var res = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content);
+                        node newNode = new node();
+
+                        foreach (KeyValuePair<string, string> kvp in res)
+                        {
+                            if (kvp.Key == "is_status")
+                            {
+                                status = kvp.Value;
+                            }
+                            if (kvp.Key == "comment")
+                            {
+                                comment = kvp.Value;
+                            }
+                            if (kvp.Key == "id")
+                            {
+                                newNode.id = Convert.ToInt16(kvp.Value);
+                            }
+                            if (kvp.Key == "mime_type")
+                            {
+                                newNode.mime_type = kvp.Value;
+                            }
+                            if (kvp.Key == "name")
+                            {
+                                newNode.name = kvp.Value;
+                            }
+                            if (kvp.Key == "path_file")
+                            {
+                                newNode.path_file = kvp.Value;
+                            }
+                            if (kvp.Key == "size")
+                            {
+                                newNode.size = Convert.ToInt64(kvp.Value);
+                            }
+                            if (kvp.Key == "storage_mtime")
+                            {
+                                newNode.storage_mtime = Convert.ToInt64(kvp.Value);
+                            }
+                            if (kvp.Key == "type")
+                            {
+                                newNode.type = kvp.Value;
+                            }
+                        }
+
+
+                        if (status != "200")
+                        {
+                            MessageBox.Show(comment);
+                        }
+                        else
+                        {
+                            addToList(ln, newNode);
+                        }
                     }
                     else
                     {
@@ -535,7 +599,48 @@ namespace LeoboxV2
             }
             else
             {
+                string newName = giveFileName(e.FullPath, e.Name);
+                string name = giveFileName(e.FullPath, e.OldName);
+                string path = giveFilePath(e.FullPath, e.Name);
+                path = path.Replace(@"\", "/");
+                int idNodeRenamed = findNodeId(ln, path, name);
+
+
                 Console.WriteLine("change type: " + e.ChangeType + " | fullPath: " + e.FullPath + " | name: " + e.Name + " | oldName: " + e.OldName + " | oldPath: " + e.OldFullPath);
+                var client = new RestClient("http://leobox.org:8080/v1/file/"+globalUser.Name+"/"+idNodeRenamed+ "?action=1&path_file="+newName+"");
+                var request = new RestRequest(Method.PUT);
+                request.AddHeader("cache-control", "no-cache");
+                request.AddHeader("ApiKeyUser", globalUser.User_token);
+                request.AddHeader("Accept", "application/json");
+                request.AddHeader("Content-Type", "multipart/form-data");
+                IRestResponse response = client.Execute(request);
+
+                var status = "";
+                var comment = "";
+                var res = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content);
+
+                foreach (KeyValuePair<string, string> kvp in res)
+                {
+                    if (kvp.Key == "is_status")
+                    {
+                        status = kvp.Value;
+                    }
+                    if (kvp.Key == "comment")
+                    {
+                        comment = kvp.Value;
+                    }
+                }
+
+
+                if (status != "200")
+                {
+                    MessageBox.Show(comment);
+                }
+                else
+                {
+                    renameNode(ln, idNodeRenamed, newName);
+                }
+
 
             }
         }
@@ -575,6 +680,78 @@ namespace LeoboxV2
                                 string path2upload = giveFilePath(e.FullPath, e.Name);
                                 Console.WriteLine("path to upload : " + path2upload);
 
+                                //////////
+                                ///
+                                string name = giveFileName(e.FullPath, e.Name);
+                                string path = giveFilePath(e.FullPath, e.Name);
+                                path = path.Replace(@"\", "/");
+                                int idToUpdate = findNodeId(ln, path, name);
+                                var client = new RestClient("http://leobox.org:8080/v1/file/"+globalUser.Name+"/"+ idToUpdate + "?action=3");
+                                var request = new RestRequest(Method.PUT);
+                                request.AddHeader("Content-Type", "multipart/form-data");
+                                request.AddHeader("ApiKeyUser", globalUser.User_token);
+                                request.AddHeader("accept", "application/json");
+                                request.AddHeader("content-type", "multipart/form-data");
+                                request.AddParameter("Content-Disposition: form-data", "name=\"file\"", ParameterType.RequestBody);
+                                request.AddFile("file", e.FullPath);
+                                IRestResponse response = client.Execute(request);
+
+                                var status = "";
+                                var comment = "";
+                                var res = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content);
+                                node newNode = new node();
+
+                                foreach (KeyValuePair<string, string> kvp in res)
+                                {
+                                    if (kvp.Key == "is_status")
+                                    {
+                                        status = kvp.Value;
+                                    }
+                                    if (kvp.Key == "comment")
+                                    {
+                                        comment = kvp.Value;
+                                    }
+                                    if (kvp.Key == "id")
+                                    {
+                                        newNode.id = Convert.ToInt16(kvp.Value);
+                                    }
+                                    if (kvp.Key == "mime_type")
+                                    {
+                                        newNode.mime_type = kvp.Value;
+                                    }
+                                    if (kvp.Key == "name")
+                                    {
+                                        newNode.name = kvp.Value;
+                                    }
+                                    if (kvp.Key == "path_file")
+                                    {
+                                        newNode.path_file = kvp.Value;
+                                    }
+                                    if (kvp.Key == "size")
+                                    {
+                                        newNode.size = Convert.ToInt64(kvp.Value);
+                                    }
+                                    if (kvp.Key == "storage_mtime")
+                                    {
+                                        newNode.storage_mtime = Convert.ToInt64(kvp.Value);
+                                    }
+                                    if (kvp.Key == "type")
+                                    {
+                                        newNode.type = kvp.Value;
+                                    }
+                                }
+
+
+                                if (status != "200")
+                                {
+                                    MessageBox.Show(comment);
+                                }
+                                else
+                                {
+                                   
+                                }
+
+
                             }
                         }
                     }
@@ -593,13 +770,14 @@ namespace LeoboxV2
 
         private static int findNodeId(List<node> no, string path, string name)
         {
+            int idReturned = 0;
             if(path == "/")
             {
-                foreach(node n in no)
+                foreach(node nn in no)
                 {
-                    if(n.name == name)
+                    if(nn.name == name)
                     {
-                        return n.id;
+                        return nn.id;
                     }
                 }
             }
@@ -607,32 +785,37 @@ namespace LeoboxV2
             {
                 foreach (node n in no)
                 {
-                    if (n.name == name && n.path_file == path)
+                    string realPath = path.Substring(1);
+                    if (n.name == name && n.path_file == realPath+name)
                     {
                         return n.id;
                     }
                     else
                     {
-                        findNodeId(n.sub_dir, path, name);
+                       int lol = findNodeId(n.sub_dir, path, name);
+                       if( lol != 0)
+                        {
+                            return lol;
+                        }
                     }
                 }
             }
             
-            return 0;
+            return idReturned;
         }
 
-        private static void renameNode(List<node> no, node noRenamed)
+        private static void renameNode(List<node> no, int idNode, string newName)
         {
             foreach (node n in no)
             {
-                if (n.id == noRenamed.id)
+                if (n.id == idNode)
                 {
-                    n.name = noRenamed.name;
+                    n.name = newName;
                     break;
                 }
                 else
                 {
-                    renameNode(n.sub_dir, noRenamed);
+                    renameNode(n.sub_dir, idNode, newName);
                 }
             }
         }
