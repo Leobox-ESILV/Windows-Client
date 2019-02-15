@@ -39,6 +39,7 @@ namespace LeoboxV2
         static FileSystemWatcher watcher = new FileSystemWatcher();
         private static FileSystemWatcher _dirWatcher;
         static List<node> ln = new List<node>();
+        private static ManualResetEvent mrse = new ManualResetEvent(false);
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
@@ -78,6 +79,7 @@ namespace LeoboxV2
             }).Start();
 
             iterateNode(ln).ContinueWith(task => startThreads());
+
             
         }
         
@@ -88,6 +90,7 @@ namespace LeoboxV2
             //Thread.Sleep(1000);
             new Thread(() =>
             {
+                mrse.WaitOne();
                 watcher.IncludeSubdirectories = true;
                 watcher.Path = tempFolderPath + @"Leobox";
                 watcher.NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.FileName
@@ -129,6 +132,18 @@ namespace LeoboxV2
 
             }).Start();
             
+            new Thread(() =>
+            {
+                while (true)
+                {
+                    Thread.Sleep(60000);
+                    Console.WriteLine("REFRESH TIME");
+                    MAJ();
+                }
+
+            }).Start();
+
+
         }
         
 
@@ -766,7 +781,89 @@ namespace LeoboxV2
         }
 
 
+
+
+
+
+
+
+        //VERIFICATION EVERY MINUTES
+
+        private static async Task MAJ()
+        {
+            //getting last updates
+            List<node> nAJ = new List<node>();
+            var client = new RestClient("http://leobox.org:8080/v1/file/" + globalUser.Name);
+            var request = new RestRequest(Method.GET);
+            request.AddHeader("cache-control", "no-cache");
+            request.AddHeader("ApiKeyUser", globalUser.User_token);
+            IRestResponse response = client.Execute(request);
+
+            node nodes = JsonConvert.DeserializeObject<node>(response.Content);
+            foreach (node n in nodes.sub_dir)
+            {
+                nAJ.Add(n);
+            }
+
+            //COMPARAISON
+            mrse.Reset();
+            await recursiveComparaison(nAJ).ContinueWith(task => recursiveDelete(nAJ));
+            ln = nAJ;
+            mrse.Set();
+        }
+
+
+        private static async Task recursiveComparaison(List<node> nAJ)
+        {
+            foreach (node naj in nAJ)
+            {
+                if(findNode(ln,naj.id, naj.storage_mtime) == 0)
+                {
+                    //alors on DL
+                    List<node> nouvelList = new List<node>();
+                    nouvelList.Add(naj);
+                    await iterateNode(nouvelList);
+                }
+            }
+            
+        }
+
+        private static void recursiveDelete(List<node> nAJ)
+        {
+            foreach (node n in ln)
+            {
+                if(findNode(nAJ, n.id, n.storage_mtime) == 0)
+                {
+                    //alors on supprime
+                    string realPath = tempFolderPath + @"Leobox/" + n.path_file;
+                }
+            }
+        }
+
         //FUNCTIONS 
+
+        private static int findNode(List<node> no, int id, Int64 storageTime)
+        {
+            int idReturned = 0;
+            
+                foreach (node n in no)
+                {
+                    if (n.id == id && n.storage_mtime == storageTime)
+                    {
+                        return n.id;
+                    }
+                    else
+                    {
+                        int lol = findNode(n.sub_dir, id, storageTime);
+                        if (lol != 0)
+                        {
+                            return lol;
+                        }
+                    }
+                }
+
+            return idReturned;
+        }
 
         private static int findNodeId(List<node> no, string path, string name)
         {
