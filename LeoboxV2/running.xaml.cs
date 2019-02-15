@@ -836,6 +836,8 @@ namespace LeoboxV2
                 {
                     //alors on supprime
                     string realPath = tempFolderPath + @"Leobox/" + n.path_file;
+                    realPath = realPath.Replace(@"\\", @"/");
+                    File.Delete(realPath);
                 }
             }
         }
