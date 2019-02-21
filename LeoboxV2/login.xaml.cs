@@ -85,9 +85,10 @@ namespace LeoboxV2
 
                 Console.WriteLine("Registered");
                 running ru = new running();
+                App.Current.Windows[0].Close();
                 ru.Show();
                 
-                App.Current.Windows[0].Close();
+                
             }
             else
             {

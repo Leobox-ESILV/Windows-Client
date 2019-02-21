@@ -3,10 +3,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:gif="http://wpfanimatedgif.codeplex.com"
         xmlns:local="clr-namespace:LeoboxV2"
-        mc:Ignorable="d"
-        Title="running" Height="450" Width="800" Loaded="Window_Loaded" Closed="Window_Closed" Unloaded="Window_Unloaded">
+        mc:Ignorable="d" Topmost="True" ShowInTaskbar="False"
+        Title="running" Width="214" Height="435" Loaded="Window_Loaded" Closed="Window_Closed" Unloaded="Window_Unloaded" WindowStyle="None">
     <Grid>
-        
+        <StackPanel>
+            <Image Name="anim" gif:ImageBehavior.AnimatedSource="C:/Users/dilan/source/repos/LeoboxV2/LeoboxV2/dl.gif" />
+        </StackPanel>
     </Grid>
 </Window>

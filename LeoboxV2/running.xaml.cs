@@ -21,6 +21,7 @@ using System.ComponentModel;
 using RestSharp;
 using Newtonsoft.Json;
 using RestSharp.Extensions;
+using System.Windows.Forms;
 
 namespace LeoboxV2
 {
@@ -33,7 +34,7 @@ namespace LeoboxV2
         {
             InitializeComponent();
         }
-
+        
         static string tempFolderPath = System.IO.Path.GetTempPath();
         static FileSystemWatcher changementWatcher = new FileSystemWatcher();
         static FileSystemWatcher watcher = new FileSystemWatcher();
@@ -43,6 +44,24 @@ namespace LeoboxV2
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            this.Hide();
+            System.Windows.Forms.NotifyIcon notifyIcon = new System.Windows.Forms.NotifyIcon();
+            notifyIcon.Icon = new System.Drawing.Icon(@"C:\Users\dilan\source\repos\LeoboxV2\LeoboxV2\logo.ico");
+            notifyIcon.Visible = true;
+            notifyIcon.MouseClick += new System.Windows.Forms.MouseEventHandler(notifyIcon_Click);
+            notifyIcon.ShowBalloonTip(500, "Ici", "?", System.Windows.Forms.ToolTipIcon.Info);
+
+            System.Windows.Forms.ContextMenu notifyIconContextMenu = new System.Windows.Forms.ContextMenu();
+            notifyIconContextMenu.MenuItems.Add("Close Leobox", new EventHandler(Close));
+
+            notifyIcon.ContextMenu = notifyIconContextMenu;
+
+
+            var desktopWorkingArea = System.Windows.SystemParameters.WorkArea;
+            this.Left = desktopWorkingArea.Right - this.Width;
+            this.Top = desktopWorkingArea.Bottom - this.Height;
+
+
             var client = new RestClient("http://leobox.org:8080/v1/file/" + globalUser.Name);
             var request = new RestRequest(Method.GET);
             request.AddHeader("cache-control", "no-cache");
@@ -83,7 +102,6 @@ namespace LeoboxV2
             
         }
         
-
         //Starting THREADS 
         private static void startThreads()
         {
@@ -191,7 +209,7 @@ namespace LeoboxV2
 
                 if (status != "200")
                 {
-                    MessageBox.Show(comment);
+                    System.Windows.MessageBox.Show(comment);
                 }
                 else
                 {
@@ -284,7 +302,7 @@ namespace LeoboxV2
 
                         if (status != "200")
                         {
-                            MessageBox.Show(comment);
+                            System.Windows.MessageBox.Show(comment);
                         }
                         else
                         {
@@ -352,7 +370,7 @@ namespace LeoboxV2
 
                         if (status != "200")
                         {
-                            MessageBox.Show(comment);
+                            System.Windows.MessageBox.Show(comment);
                         }
                         else
                         {
@@ -433,7 +451,7 @@ namespace LeoboxV2
 
                                 if (status != "200")
                                 {
-                                    MessageBox.Show(comment);
+                                    System.Windows.MessageBox.Show(comment);
                                 }
                                 else
                                 {
@@ -510,7 +528,7 @@ namespace LeoboxV2
 
                                 if (status != "200")
                                 {
-                                    MessageBox.Show(comment);
+                                    System.Windows.MessageBox.Show(comment);
                                 }
                                 else
                                 {
@@ -592,7 +610,7 @@ namespace LeoboxV2
 
                     if (status != "200")
                     {
-                        MessageBox.Show(comment);
+                        System.Windows.MessageBox.Show(comment);
                     }
                     else
                     {
@@ -649,7 +667,7 @@ namespace LeoboxV2
 
                 if (status != "200")
                 {
-                    MessageBox.Show(comment);
+                    System.Windows.MessageBox.Show(comment);
                 }
                 else
                 {
@@ -759,7 +777,7 @@ namespace LeoboxV2
 
                                 if (status != "200")
                                 {
-                                    MessageBox.Show(comment);
+                                    System.Windows.MessageBox.Show(comment);
                                 }
                                 else
                                 {
@@ -1218,7 +1236,35 @@ namespace LeoboxV2
             }
 
         }
-
         
+        private void Close(Object sender, EventArgs e)
+        {
+            ShellFolderServer.UnregisterNativeDll(RegistrationMode.User);
+            DirectoryInfo di = Directory.CreateDirectory(tempFolderPath + @"Leobox");
+            di.Delete(true);
+            Console.WriteLine("Stopped"); // end of program
+            System.Windows.Application.Current.Shutdown();
+            System.Diagnostics.Process.GetCurrentProcess().Kill();
+        }
+
+        private void notifyIcon_Click(object sender, System.Windows.Forms.MouseEventArgs e)
+        {
+            this.Show();
+            this.Activate();
+            this.Focus();
+            /*var image = new BitmapImage();
+            image.BeginInit();
+            image.UriSource = new Uri("C:/Users/dilan/source/repos/LeoboxV2/LeoboxV2/dl.gif");
+            image.EndInit();
+            WpfAnimatedGif.ImageBehavior.SetAnimatedSource(anim,image);
+            */
+
+        }
+        
+        protected override void OnDeactivated(EventArgs e)
+        {
+            this.Hide();
+        }
+
     }
 }
