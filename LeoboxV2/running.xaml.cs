@@ -49,7 +49,7 @@ namespace LeoboxV2
             notifyIcon.Icon = new System.Drawing.Icon(@"C:\Users\dilan\source\repos\LeoboxV2\LeoboxV2\logo.ico");
             notifyIcon.Visible = true;
             notifyIcon.MouseClick += new System.Windows.Forms.MouseEventHandler(notifyIcon_Click);
-            notifyIcon.ShowBalloonTip(500, "Ici", "?", System.Windows.Forms.ToolTipIcon.Info);
+            notifyIcon.ShowBalloonTip(500, "Leobox", "Your application is available here", System.Windows.Forms.ToolTipIcon.Info);
 
             System.Windows.Forms.ContextMenu notifyIconContextMenu = new System.Windows.Forms.ContextMenu();
             notifyIconContextMenu.MenuItems.Add("Close Leobox", new EventHandler(Close));
