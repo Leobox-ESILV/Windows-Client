@@ -1093,11 +1093,19 @@ namespace LeoboxV2
             public MyRootFolder(MyShellFolderServer server, ShellItemIdList idList)
                 : base(idList)
             {
+
+                CanCopy = true;
+                CanDelete = true;
+                CanLink = true;
+                CanMove = true;
+                CanPaste = true;
+                CanRename = true;
                 if (server == null)
                     throw new ArgumentNullException(nameof(server));
 
                 Server = server;
             }
+
 
             public MyShellFolderServer Server { get; }
 
